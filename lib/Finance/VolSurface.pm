@@ -84,7 +84,7 @@ It can be delta points, moneyness points or any other points that we might have 
 
 has smile_points => (
     is         => 'ro',
-    isa        => sub { die "requires an array for smile_points" unless ref(shift) eq 'ARRAY' },
+    isa        => 'ArrayRef',
     lazy_build => 1,
 );
 
@@ -110,7 +110,7 @@ This will give an array-reference containing volatility spreads for first tenor 
 
 has spread_points => (
     is         => 'ro',
-    isa        => sub { die "requires an array for spread_points" unless ref(shift) eq 'ARRAY' },
+    isa        => 'ArrayRef',
     lazy_build => 1,
 );
 
@@ -169,7 +169,7 @@ Get all the terms in a surface in ascending order.
 
 has term_by_day => (
     is         => 'ro',
-    isa        => sub { die "requires an array for term_by_day" unless ref(shift) eq 'ARRAY' },
+    isa        => 'ArrayRef',
     init_arg   => undef,
     lazy_build => 1,
 );
