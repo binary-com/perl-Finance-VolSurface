@@ -28,6 +28,7 @@ Finance::VolSurface -
 use Moo;
 
 use Finance::VolSurface::Utils;
+use Finance::VolSurface::Types;
 
 =head2 for_date
 
@@ -70,12 +71,11 @@ Type of the surface, delta, moneyness or flat.
 
 has type => (
     is       => 'ro',
-    isa      => 'qf_surface_type',
+    isa      => 'finance_volsurface_type',
     required => 1,
     init_arg => undef,
     default  => undef,
 );
-
 
 =head2 surface
 
