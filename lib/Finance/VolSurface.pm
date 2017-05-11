@@ -1,4 +1,5 @@
 package Finance::VolSurface;
+# ABSTRACT: Abstraction for dealing with volatility surfaces
 
 use strict;
 use warnings;
