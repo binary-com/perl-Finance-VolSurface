@@ -26,7 +26,7 @@ Finance::VolSurface -
 
 =cut
 
-use Moo;
+use Moose;
 
 use Date::Utility;
 use Finance::VolSurface::Utils;
