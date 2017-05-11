@@ -15,7 +15,7 @@ Volatility surface types.
 my @surface_types = qw(delta flat moneyness);
 my $regex = '(' . join('|', @surface_types) . ')';
 my $type = "Type::Tiny"->new(
-    name       => "finance_volsurface_type",
+    name       => "Finance_VolSurface_Type",
     constraint => sub { 
         /^$regex$/;
     },
