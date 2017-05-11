@@ -6,23 +6,16 @@ use 5.010000;
 
 use ExtUtils::MakeMaker 6.48;
 
-use File::ShareDir::Install;
-$File::ShareDir::Install::INCLUDE_DOTFILES = 1;
-$File::ShareDir::Install::INCLUDE_DOTDIRS = 1;
-install_share dist => "share";
-
-
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "represents a contract object for a single bet",
+  "ABSTRACT" => "Abstraction for dealing with volatility surfaces",
   "AUTHOR" => "binary.com <cpan\@binary.com>",
   "CONFIGURE_REQUIRES" => {
-    "ExtUtils::MakeMaker" => "6.48",
-    "File::ShareDir::Install" => "0.06"
+    "ExtUtils::MakeMaker" => "6.48"
   },
-  "DISTNAME" => "Finance-Contract",
+  "DISTNAME" => "Finance-VolSurface",
   "LICENSE" => "perl",
   "MIN_PERL_VERSION" => "5.010000",
-  "NAME" => "Finance::Contract",
+  "NAME" => "Finance::VolSurface",
   "PREREQ_PM" => {
     "Date::Utility" => 0,
     "Format::Util::Numbers" => 0,
@@ -40,7 +33,7 @@ my %WriteMakefileArgs = (
     "Test::CheckDeps" => "0.010",
     "Test::More" => "0.94"
   },
-  "VERSION" => "0.009",
+  "VERSION" => "0.001",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -74,9 +67,3 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 WriteMakefile(%WriteMakefileArgs);
-
-{
-package
-MY;
-use File::ShareDir::Install qw(postamble);
-}
