@@ -27,20 +27,9 @@ Finance::VolSurface -
 
 use Moo;
 
+use Date::Utility;
 use Finance::VolSurface::Utils;
 use Finance::VolSurface::Types;
-
-=head2 for_date
-
-The date for which we want to have the volatility surface data
-
-=cut
-
-has for_date => (
-    is      => 'ro',
-    isa     => 'Maybe[Date::Utility]',
-    default => undef,
-);
 
 =head2 effective_date
 
@@ -63,53 +52,17 @@ sub _build_effective_date {
     return Finance::VolSurface::Utils->new->effective_date_for($self->recorded_date);
 }
 
-=head2 type
+=head2 for_date
 
-Type of the surface, delta, moneyness or flat.
-
-=cut
-
-has type => (
-    is       => 'ro',
-    isa      => 'finance_volsurface_type',
-    required => 1,
-    init_arg => undef,
-    default  => undef,
-);
-
-=head2 surface
-
-Volatility surface in a hash reference.
+The date for which we want to have the volatility surface data
 
 =cut
 
-has surface => (
-    is         => 'ro',
-    lazy_build => 1,
+has for_date => (
+    is      => 'ro',
+    isa     => 'Maybe[Date::Utility]',
+    default => undef,
 );
-
-=head2 surface_data
-
-The original surface data.
-
-=cut
-
-has surface_data => (
-    is         => 'ro',
-    lazy_build => 1,
-);
-
-=head2 symbol
-
-The symbol of the underlying that this surface is for (e.g. frxUSDJPY)
-
-=cut
-
-has symbol => (
-    is         => 'ro',
-    lazy_build => 1,
-);
-
 
 =head2 recorded_date
 
@@ -122,7 +75,6 @@ has recorded_date => (
     isa        => 'Date::Utility',
     lazy_build => 1,
 );
-
 
 =head2 smile_points
 
@@ -178,6 +130,39 @@ sub _build_spread_points {
     return [];
 }
 
+=head2 surface
+
+Volatility surface in a hash reference.
+
+=cut
+
+has surface => (
+    is         => 'ro',
+    lazy_build => 1,
+);
+
+=head2 surface_data
+
+The original surface data.
+
+=cut
+
+has surface_data => (
+    is         => 'ro',
+    lazy_build => 1,
+);
+
+=head2 symbol
+
+The symbol of the underlying that this surface is for (e.g. frxUSDJPY)
+
+=cut
+
+has symbol => (
+    is         => 'ro',
+    lazy_build => 1,
+);
+
 =head2 term_by_day
 
 Get all the terms in a surface in ascending order.
@@ -197,5 +182,18 @@ sub _build_term_by_day {
     return [sort { $a <=> $b } keys %{$self->surface}];
 }
 
+=head2 type
+
+Type of the surface, delta, moneyness or flat.
+
+=cut
+
+has type => (
+    is       => 'ro',
+    isa      => 'finance_volsurface_type',
+    required => 1,
+    init_arg => undef,
+    default  => undef,
+);
 
 1;
