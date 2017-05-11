@@ -26,11 +26,15 @@ Finance::VolSurface -
 
 =cut
 
+no indirect;
+
 use Moose;
 
 use Date::Utility;
 use Finance::VolSurface::Utils;
 use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
+
+use List::Util qw(first);
 
 =head2 effective_date
 
