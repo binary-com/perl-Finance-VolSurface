@@ -1,6 +1,7 @@
 requires 'indirect';
 requires 'Moo';
 requires 'Moose';
+requires 'Type::Tiny';
 requires 'Time::HiRes';
 requires 'Date::Utility';
 requires 'Format::Util::Numbers';
