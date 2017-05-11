@@ -198,4 +198,40 @@ has type => (
     default  => undef,
 );
 
+=head2 get_rr_bf_for_smile
+
+Return the rr and bf values for a given smile
+For more info see: https://en.wikipedia.org/wiki/Risk_reversal and https://en.wikipedia.org/wiki/Butterfly_(options)
+
+=cut
+
+sub get_rr_bf_for_smile {
+    my ($self, $market_smile) = @_;
+
+    my $result = {
+        ATM   => $market_smile->{50},
+        RR_25 => $market_smile->{25} - $market_smile->{75},
+        BF_25 => ($market_smile->{25} + $market_smile->{75}) / 2 - $market_smile->{50},
+    };
+    if (exists $market_smile->{10}) {
+        $result->{RR_10} = $market_smile->{10} - $market_smile->{90};
+        $result->{BF_10} = ($market_smile->{10} + $market_smile->{90}) / 2 - $market_smile->{50};
+    }
+
+    return $result;
+}
+
+=head2 get_surface_smile
+
+Returns the smile on the surface.
+Returns an empty hash reference if not present.
+
+=cut
+
+sub get_surface_smile {
+    my ($self, $days) = @_;
+
+    return $self->surface->{$days}->{smile} // {};
+}
+
 1;
