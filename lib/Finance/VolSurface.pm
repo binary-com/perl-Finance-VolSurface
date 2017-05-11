@@ -30,7 +30,7 @@ use Moo;
 
 use Date::Utility;
 use Finance::VolSurface::Utils;
-use Finance::VolSurface::Types;
+use Finance::VolSurface::Types qw(finance_volsurface_type);
 
 =head2 effective_date
 
@@ -191,7 +191,7 @@ Type of the surface, delta, moneyness or flat.
 
 has type => (
     is       => 'ro',
-    isa      => 'finance_volsurface_type',
+    isa      => finance_volsurface_type,
     required => 1,
     init_arg => undef,
     default  => undef,
