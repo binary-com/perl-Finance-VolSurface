@@ -58,3 +58,13 @@ Get all the terms in a surface in ascending order.
 ## type
 
 Type of the surface, delta, moneyness or flat.
+
+## get\_rr\_bf\_for\_smile
+
+Return the rr and bf values for a given smile
+For more info see: https://en.wikipedia.org/wiki/Risk\_reversal and https://en.wikipedia.org/wiki/Butterfly\_(options)
+
+## get\_surface\_smile
+
+Returns the smile on the surface.
+Returns an empty hash reference if not present.
