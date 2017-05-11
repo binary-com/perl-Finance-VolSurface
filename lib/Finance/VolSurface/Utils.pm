@@ -12,10 +12,13 @@ Some general vol-related utility functions.
 
 =cut
 
+no indirect;
 use Moo;
 
 use DateTime::TimeZone;
 use Date::Utility;
+use Number::Closest::XS qw(find_closest_numbers_around);
+use List::MoreUtils qw(notall);
 
 ## VERSION
 
@@ -59,6 +62,28 @@ sub is_before_rollover {
     my ($self, $date) = @_;
 
     return ($date->is_after($self->NY1700_rollover_date_on($date))) ? 0 : 1;
+}
+
+sub _get_points_to_interpolate {
+    my ($seek, $available_points) = @_;
+    die('Need 2 or more term structures to interpolate.')
+        if scalar @$available_points <= 1;
+
+    return @{find_closest_numbers_around($seek, $available_points, 2)};
+}
+
+sub _is_between {
+    my ($seek, $points) = @_;
+
+    my @points = @$points;
+
+    die('some of the points are not defined')
+        if (notall { defined $_ } @points);
+    die('less than two available points')
+        if (scalar @points < 2);
+
+    return if $seek > max(@points) or $seek < min(@points);
+    return 1;
 }
 
 1;
