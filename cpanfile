@@ -11,6 +11,8 @@ requires 'DateTime::TimeZone';
 requires 'Number::Closest::XS';
 requires 'List::MoreUtils';
 
+requires 'Finance::Calendar';
+
 on develop => sub {
     requires 'Devel::Cover::Report::Kritika', '>= 0.05';
 };

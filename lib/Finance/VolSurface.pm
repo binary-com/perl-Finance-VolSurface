@@ -8,15 +8,129 @@ our $VERSION = '0.001';
 
 =head1 NAME
 
-Finance::VolSurface - 
+Finance::VolSurface -  represents a volatility surface
 
 =head1 SYNOPSIS
 
     use feature qw(say);
     use Finance::VolSurface;
 
+    Finance::VolSurface->new(
+        delta => { ... },
+    );
+
+    my $volsurface = Finance::VolSurface::Delta->new(
+        surface       => { ... },
+        recorded_date => $date,
+        underlying    => '...',
+    );
+
+    # Interpolate points on the surface to get a single number for volatility
+    my $vol = $volsurface->get_volatility(
+        delta => 50,
+        from  => $now,
+        to    => $now->plus('3d'),
+    );
+    # Spread from max or atm
+    my $spread = $volsurface->get_spread(
+        sought_point => 'atm', # may rename to delta
+        days         => 7,     # may rename to tenor
+    );
+
+    # Validation for the supplied volsurface
+    die 'incorrect volsurface provided: ' . $volsurface->validation_error unless $volsurface->is_valid;
+
 =head1 DESCRIPTION
 
+=head2 Delta surface
+
+Raw surface data for a delta surface:
+
+ {
+   'ON' => {
+       smile => {
+           50 => 0.4,
+           25 => 0.2,
+           75 => 0.7,
+       },
+       spread => {
+           50 => 0.1,
+           25 => 0.1,
+           75 => 0.1,
+       },
+   },
+   '1W' => {
+       smile => {
+           50 => 0.4,
+           25 => 0.2,
+           75 => 0.7,
+       },
+       spread => {
+           50 => 0.1,
+           25 => 0.1,
+           75 => 0.1,
+       },
+   },
+   '2W' => { ... }
+ }
+
+Expected tenors could include:
+
+* ON for overnight
+* 1W for 1 week
+* 6M for 6 month
+* 1Y for 1 year
+
+Internally, the key for the surface is always a number of days (the tenor),
+and for overnight this would typically be 1 to 3 (for weekends).
+
+On load, we need to 
+
+=head2 Moneyness
+
+The keys in the smile hashref are moneyness points as percentages (100 = 100%),
+typically ranging from 80%-120%.
+
+Spread has a single atm value.
+
+ {
+   1 => {
+       smile => {
+           80 => 0.2,
+           82 => 0.2,
+           84 => 0.2,
+           88 => 0.2,
+           92 => 0.2,
+           96 => 0.2,
+           100 => 0.4,
+           102 => 0.4,
+           104 => 0.4,
+           108 => 0.4,
+           114 => 0.4,
+           120 => 0.7,
+       },
+       spread => {
+           100 => 0.1,
+       },
+   },
+   7 => { ... },
+ }
+
+=head2 Flat
+
+This is a single point.
+
+ {
+   1 => {
+       smile => {
+           100 => 0.1,
+       },
+       spread => {
+           100 => 0,
+       },
+   },
+   7 => { ... },
+ }
 
 =head2 Construction
 
@@ -31,10 +145,12 @@ no indirect;
 use Moose;
 
 use Date::Utility;
-use Finance::VolSurface::Utils;
-use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
 
 use List::Util qw(first);
+
+use Finance::VolSurface::Utils;
+use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
+use Finance::VolSurface::ExpiryConventions;
 
 =head2 effective_date
 

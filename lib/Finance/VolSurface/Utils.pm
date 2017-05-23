@@ -87,4 +87,81 @@ sub _is_between {
     return 1;
 }
 
+my %premium_adjusted = map { $_ => 1 } qw(
+    frxAUDAED
+    frxAUDCAD
+    frxAUDCHF
+    frxAUDHKD
+    frxAUDIDR
+    frxAUDJPY
+    frxAUDMXN
+    frxAUDNOK
+    frxAUDNZD
+    frxAUDSEK
+    frxAUDSGD
+    frxAUDTRY
+    frxAUDZAR
+    frxBTCEUR
+    frxBTCUSD
+    frxCADCHF
+    frxCADJPY
+    frxCHFJPY
+    frxEURAED
+    frxEURAUD
+    frxEURCAD
+    frxEURCHF
+    frxEURGBP
+    frxEURHKD
+    frxEURIDR
+    frxEURINR
+    frxEURJPY
+    frxEURMXN
+    frxEURNOK
+    frxEURNZD
+    frxEURPLN
+    frxEURSEK
+    frxEURSGD
+    frxEURTRY
+    frxEURZAR
+    frxGBPAED
+    frxGBPAUD
+    frxGBPCAD
+    frxGBPCHF
+    frxGBPHKD
+    frxGBPIDR
+    frxGBPINR
+    frxGBPJPY
+    frxGBPMXN
+    frxGBPNOK
+    frxGBPNZD
+    frxGBPPLN
+    frxGBPSEK
+    frxGBPSGD
+    frxGBPTRY
+    frxGBPZAR
+    frxNZDCHF
+    frxNZDJPY
+    frxUSDAED
+    frxUSDCAD
+    frxUSDCHF
+    frxUSDHKD
+    frxUSDIDR
+    frxUSDINR
+    frxUSDJPY
+    frxUSDMXN
+    frxUSDNOK
+    frxUSDPLN
+    frxUSDSEK
+    frxUSDSGD
+    frxUSDTRY
+    frxUSDZAR
+);
+
+sub underlying_is_premium_adjusted {
+    my ($symbol) = @_;
+    my ($curr1, $curr2) = $symbol =~ /^frx(\w{3})(\w{3})$/ or die 'unhandled forex symbol ' . $symbol;
+
+    return exists $premium_adjusted{$symbol};
+}
+
 1;
