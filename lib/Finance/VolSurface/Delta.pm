@@ -424,7 +424,6 @@ sub _admissible_check {
     my $self = shift;
 
     my $underlying = $self->underlying;
-    my $builder    = $self->builder;
 
     # We don't want to pass around a spot just to calculate the barrier. Since we're looking
     # at the shape of the curve, not the specific values, we pick an arbitrary spot here.

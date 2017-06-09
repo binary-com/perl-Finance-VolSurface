@@ -353,7 +353,6 @@ sub _max_difference_between_smile_points {
 sub _admissible_check {
     my $self = shift;
 
-    my $builder  = $self->builder;
     my $S        = $self->spot;
     my @expiries = @{$self->get_smile_expiries};
     my @tenors   = @{$self->original_term_for_smile};
