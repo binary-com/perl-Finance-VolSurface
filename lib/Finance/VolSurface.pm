@@ -23,6 +23,8 @@ Finance::VolSurface -  represents a volatility surface
         surface       => { ... },
         recorded_date => $date,
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
+        r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
+        q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
     );
 
     # Interpolate points on the surface to get a single number for volatility
