@@ -15,6 +15,8 @@ Finance::VolSurface -  represents a volatility surface
         surface       => { ... },
         recorded_date => $date,
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
+        r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
+        q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
     );
 
     # Interpolate points on the surface to get a single number for volatility
@@ -294,12 +296,6 @@ Return the surface type
 ## min\_vol\_spread
 
 minimum volatility spread that we can accept for this volatility surface.
-
-## spot
-
-Get the spot reference used to calculate the surface.
-
-We should always use reference spot of the surface for any moneyness-related vol calculation
 
 ## get\_volatility
 
