@@ -363,4 +363,183 @@ sub get_surface_smile {
     return $self->surface->{$days}->{smile} // {};
 }
 
+=head2 is_valid
+
+Does this volatility surface pass our validation.
+
+=cut
+
+sub is_valid {
+    my $self = shift;
+
+    try {
+        $self->$_ for ($self->_validation_methods);
+    }
+    catch {
+        $self->validation_error($_);
+    };
+
+    return !$self->validation_error;
+}
+
+sub _validate_age {
+    my $self = shift;
+
+    if (time - $self->recorded_date->epoch > 4 * 3600) {
+        die('Volatility surface from provider for ' . $self->symbol . ' is more than 4 hours old.');
+    }
+
+    return;
+}
+
+sub _validate_structure {
+    my $self = shift;
+
+    my $surface_hashref = $self->surface;
+    my $system_symbol   = $self->symbol;
+
+    # Somehow I do not know why there is a limit of term on delta surface, but
+    # for moneyness we might need at least up to 2 years to get the spread.
+    my $extra_allowed = $Quant::Framework::Underlying::extra_vol_diff_by_delta || 0;
+    my $max_vol_change_by_delta = 0.4 + $extra_allowed;
+
+    my @days = sort { $a <=> $b } keys %{$surface_hashref};
+
+    if (@days < 2) {
+        die('Must be at least two maturities on vol surface for ' . $self->symbol . '.');
+    }
+
+    if ($days[-1] > $self->_max_allowed_term) {
+        die("Day[$days[-1]] in volsurface for underlying[$system_symbol] greater than allowed[" . $self->_max_allowed_term . "].");
+    }
+
+    if ($self->underlying->market->name eq 'forex' and $days[0] > 7) {
+        die("ON term is missing in volsurface for underlying $system_symbol, the minimum term is $days[0].");
+    }
+
+    foreach my $day (@days) {
+        if ($day !~ /^\d+$/) {
+            die("Invalid day[$day] in volsurface for underlying[$system_symbol]. Not a positive integer.");
+        }
+    }
+
+    foreach my $day (grep { exists $surface_hashref->{$_}->{smile} } @days) {
+        my $smile = $surface_hashref->{$day}->{smile};
+        my @volatility_level = sort { $a <=> $b } keys %$smile;
+
+        for (my $i = 0; $i < $#volatility_level; $i++) {
+            my $level = $volatility_level[$i];
+
+            if ($level !~ /^\d+\.?\d+$/) {
+                die("Invalid vol_point[$level] for underlying[$system_symbol].");
+            }
+
+            my $next_level = $volatility_level[$i + 1];
+            if (abs($level - $next_level) > $self->_max_difference_between_smile_points) {
+                die("Difference between point $level and $next_level is too great for days $day.");
+            }
+
+            if (not $self->_is_valid_volatility_smile($smile)) {
+                die("Invalid smile volatility on $day for $system_symbol");
+            }
+
+            if (abs($smile->{$level} - $smile->{$next_level}) > $max_vol_change_by_delta * $smile->{$level}) {
+                die(      "Invalid volatility points: too big jump from "
+                        . "$level:$smile->{$level} to $next_level:$smile->{$next_level}"
+                        . "for maturity[$day], underlying[$system_symbol]");
+            }
+        }
+    }
+
+    return;
+}
+
+sub _is_valid_volatility_smile {
+    my ($self, $smile) = @_;
+
+    foreach my $vol (values %$smile) {
+        # sanity check on volatility. Cannot be more than 500% and must be a number.
+        return if ($vol !~ /^\d?\.?\d*$/ or $vol > 5);
+    }
+
+    return 1;
+}
+
+sub _validate_identical_surface {
+    my $self = shift;
+
+    my $existing = $self->new({
+        underlying       => $self->underlying,
+        chronicle_reader => $self->chronicle_reader,
+        chronicle_writer => $self->chronicle_writer,
+    });
+
+    my $existing_surface_data = $existing->surface;
+    my $new_surface_data      = $self->surface;
+
+    my @existing_terms = sort { $a <=> $b } grep { exists $existing_surface_data->{$_}{smile} } keys %$existing_surface_data;
+    my @new_terms      = sort { $a <=> $b } grep { exists $new_surface_data->{$_}{smile} } keys %$new_surface_data;
+
+    return if @existing_terms != @new_terms;
+    return if any { $existing_terms[$_] != $new_terms[$_] } (0 .. $#existing_terms);
+
+    foreach my $term (@existing_terms) {
+        my $existing_smile = $existing_surface_data->{$term}->{smile};
+        my $new_smile      = $new_surface_data->{$term}->{smile};
+        return if (scalar(keys %$existing_smile) != scalar(keys %$new_smile));
+        return if (any { $existing_smile->{$_} != $new_smile->{$_} } keys %$existing_smile);
+    }
+
+    my $existing_surface_epoch = Date::Utility->new($self->document->{date})->epoch;
+
+    if (time - $existing_surface_epoch > 15000 and not $self->underlying->quanto_only) {
+        die('Surface data has not changed since last update [' . $existing_surface_epoch . '] for ' . $self->symbol . '.');
+    }
+
+    return;
+}
+
+sub _validate_volatility_jumps {
+    my $self = shift;
+
+    my $existing = $self->new({
+        underlying       => $self->underlying,
+        chronicle_reader => $self->chronicle_reader,
+        chronicle_writer => $self->chronicle_writer,
+    });
+
+    my @terms           = @{$self->original_term_for_smile};
+    my @new_expiry      = @{$self->get_smile_expiries};
+    my @existing_expiry = @{$existing->get_smile_expiries};
+
+    my @points = @{$self->smile_points};
+    my $type   = $self->type;
+
+    for (my $i = 1; $i <= $#new_expiry; $i++) {
+        for (my $j = 0; $j <= $#points; $j++) {
+            my $sought_point = $points[$j];
+            my $new_vol      = $self->get_volatility({
+                $type => $sought_point,
+                from  => $self->recorded_date,
+                to    => $new_expiry[$i],
+            });
+            my $existing_vol = $existing->get_volatility({
+                $type => $sought_point,
+                from  => $existing->recorded_date,
+                to    => $existing_expiry[$i],
+            });
+            my $diff = abs($new_vol - $existing_vol);
+            if ($diff > 0.03 and $diff > $existing_vol) {
+                die('Big difference found on term[' . $terms[$i - 1] . '] for point [' . $sought_point . '] with absolute diff [' . $diff . '].');
+            }
+        }
+    }
+
+    return;
+}
+
+has validation_error => (
+    is      => 'rw',
+    default => '',
+);
 1;
