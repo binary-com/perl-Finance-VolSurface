@@ -340,8 +340,9 @@ sub _ensure_conversion_args {
 
     $new_args{t} ||= ($args->{to}->epoch - $args->{from}->epoch) / (365 * 86400);
     $new_args{premium_adjusted} ||= $underlying->delta_premium_adjusted;
-    $new_args{r_rate}           ||= $self->builder->build_interest_rate->interest_rate_for($new_args{t});
-    $new_args{q_rate}           ||= $self->builder->build_dividend->dividend_rate_for($new_args{t});
+    my $interpolate_method = $underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
+    $new_args{r_rate}           ||= $self->r_rates->interest_rate_for($new_args{t});
+    $new_args{q_rate}           ||= $self->q_rates->$interpolate_method($new_args{t});
 
     $new_args{atm_vol} ||= $self->get_volatility({
         delta => 50,
@@ -424,12 +425,15 @@ sub _admissible_check {
 
     my $underlying = $self->underlying;
     my $builder    = $self->builder;
-    my $S;
-    my $premium_adjusted = $underlying->market_convention->{delta_premium_adjusted};
+
+    # We don't want to pass around a spot just to calculate the barrier. Since we're looking
+    # at the shape of the curve, not the specific values, we pick an arbitrary spot here.
+    my $S = 100;
+    my $premium_adjusted = $underlying->delta_premium_adjusted;
     my @expiries         = @{$self->get_smile_expiries};
     my @tenors           = @{$self->original_term_for_smile};
     my $now              = Date::Utility->new;
-    $S = $underlying->spot_tick->quote if defined $underlying->spot_tick;
+    my $interpolate_method = $underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
 
     for (my $i = 1; $i <= $#expiries; $i++) {
         my $day    = $tenors[$i - 1];
@@ -439,8 +443,8 @@ sub _admissible_check {
             if ($expiry->days_between($now) <= 0);
 
         my $t     = ($expiry->epoch - $now->epoch) / (365 * 86400);
-        my $r     = $builder->build_interest_rate->interest_rate_for($t);
-        my $q     = $builder->build_dividend->dividend_rate_for($t);
+	my $r     = $self->r_rates->interest_rate_for($t);
+	my $q     = $self->q_rates->$interpolate_method($t);
         my $smile = $self->surface->{$day}->{smile};
 
         my @volatility_level = sort { $a <=> $b } keys %{$smile};
