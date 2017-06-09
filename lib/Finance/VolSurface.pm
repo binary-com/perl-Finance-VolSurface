@@ -160,6 +160,8 @@ use Finance::VolSurface::Utils;
 use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
 use Finance::VolSurface::ExpiryConventions;
 
+our $extra_vol_diff_by_delta = 0.1;
+
 =head2 effective_date
 
 Surfaces roll over at 5pm NY time, so the vols of any surfaces recorded after 5pm NY but
