@@ -321,8 +321,9 @@ sub _convert_moneyness_smile_to_delta {
         map { get_strike_for_moneyness({moneyness => $_ / 100, spot => $self->spot,}) => $moneyness_smile->{$_} } keys %$moneyness_smile;
 
     my $tiy    = $days / 365;
-    my $r_rate = $self->builder->build_interest_rate->interest_rate_for($tiy);
-    my $q_rate = $self->builder->build_dividend->dividend_rate_for($tiy);
+    my $interpolate_method = $underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
+    my $r_rate = $self->r_rates->interest_rate_for($tiy);
+    my $q_rate = $self->q_rates->$interpolate_method($tiy);
     my %deltas;
     foreach my $strike (keys %strikes) {
         my $vol   = $strikes{$strike};
@@ -333,7 +334,7 @@ sub _convert_moneyness_smile_to_delta {
             spot             => $self->spot,
             r_rate           => $r_rate,
             q_rate           => $q_rate,
-            premium_adjusted => $self->underlying->market_convention->{delta_premium_adjusted},
+            premium_adjusted => $self->underlying->delta_premium_adjusted,
         });
         $deltas{$delta} = $vol;
     }
@@ -358,6 +359,7 @@ sub _admissible_check {
     my @tenors   = @{$self->original_term_for_smile};
     my $now      = Date::Utility->new;
 
+    my $interpolate_method = $underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
     for (my $i = 1; $i <= $#expiries; $i++) {
         my $day    = $tenors[$i - 1];
         my $expiry = $expiries[$i];
@@ -366,8 +368,8 @@ sub _admissible_check {
             if ($expiry->days_between($now) <= 0);
 
         my $t     = ($expiry->epoch - $now->epoch) / (365 * 86400);
-        my $r     = $builder->build_interest_rate->interest_rate_for($t);
-        my $q     = $builder->build_dividend->dividend_rate_for($t);
+	my $r     = $self->r_rates->interest_rate_for($tiy);
+	my $q     = $self->q_rates->$interpolate_method($tiy);
         my $smile = $self->surface->{$day}->{smile};
 
         my @volatility_level = sort { $a <=> $b } keys %{$smile};
