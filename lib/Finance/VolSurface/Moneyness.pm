@@ -114,7 +114,7 @@ sub get_volatility {
 
     my $moneyness =
           $internal_args{strike}
-        ? $internal_args{strike} / $self->spot_reference * 100
+        ? $internal_args{strike} / $self->spot * 100
         : $internal_args{moneyness};
 
     die "Sought point must be a number." if not looks_like_number($moneyness);
@@ -332,7 +332,7 @@ sub _convert_moneyness_smile_to_delta {
     my $moneyness_smile = $self->get_smile($days);
 
     my %strikes =
-        map { get_strike_for_moneyness({moneyness => $_ / 100, spot => $self->spot_reference,}) => $moneyness_smile->{$_} } keys %$moneyness_smile;
+        map { get_strike_for_moneyness({moneyness => $_ / 100, spot => $self->spot,}) => $moneyness_smile->{$_} } keys %$moneyness_smile;
 
     my $tiy    = $days / 365;
     my $r_rate = $self->builder->build_interest_rate->interest_rate_for($tiy);
@@ -344,7 +344,7 @@ sub _convert_moneyness_smile_to_delta {
             strike           => $strike,
             atm_vol          => $vol,
             t                => $tiy,
-            spot             => $self->spot_reference,
+            spot             => $self->spot,
             r_rate           => $r_rate,
             q_rate           => $q_rate,
             premium_adjusted => $self->underlying->market_convention->{delta_premium_adjusted},
@@ -367,7 +367,7 @@ sub _admissible_check {
     my $self = shift;
 
     my $builder  = $self->builder;
-    my $S        = $self->spot_reference;
+    my $S        = $self->spot;
     my @expiries = @{$self->get_smile_expiries};
     my @tenors   = @{$self->original_term_for_smile};
     my $now      = Date::Utility->new;
