@@ -100,7 +100,7 @@ sub get_volatility {
 
     my $moneyness =
           $internal_args{strike}
-        ? $internal_args{strike} / $self->spot * 100
+        ? $internal_args{strike} / $args->{spot} * 100
         : $internal_args{moneyness};
 
     die "Sought point must be a number." if not looks_like_number($moneyness);
