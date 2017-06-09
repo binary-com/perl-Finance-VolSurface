@@ -59,20 +59,6 @@ has atm_spread_point => (
     default => 100,
 );
 
-=head2 spot
-
-Get the spot reference used to calculate the surface.
-
-We should always use reference spot of the surface for any moneyness-related vol calculation
-
-=cut
-
-has spot => (
-    is         => 'rw',
-    isa        => 'Num',
-    required   => 1,
-);
-
 =head2 get_volatility
 
 USAGE:
