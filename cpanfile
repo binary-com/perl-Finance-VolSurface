@@ -13,6 +13,7 @@ requires 'List::MoreUtils';
 
 requires 'Finance::Calendar';
 requires 'Finance::Underlying';
+requires 'Finance::YieldCurve';
 
 on develop => sub {
     requires 'Devel::Cover::Report::Kritika', '>= 0.05';
