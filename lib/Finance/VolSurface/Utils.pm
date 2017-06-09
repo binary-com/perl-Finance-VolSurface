@@ -164,4 +164,21 @@ sub underlying_is_premium_adjusted {
     return exists $premium_adjusted{$symbol};
 }
 
+=head2 get_ny_offset_from_gmt
+
+Returns offset in hours for the given epoch for NY vs GMT.
+Caches output per hour.
+
+=cut
+
+my $ny_offset_from_gmt_by_hour = {};
+
+sub get_ny_offset_from_gmt {
+    my $epoch = shift;
+    $epoch = int($epoch / 3600);
+    $ny_offset_from_gmt_by_hour->{$epoch} = Date::Utility->new($epoch * 3600)->timezone_offset('America/New_York')->hours
+        unless $ny_offset_from_gmt_by_hour->{$epoch};
+    return $ny_offset_from_gmt_by_hour->{$epoch};
+}
+
 1;
