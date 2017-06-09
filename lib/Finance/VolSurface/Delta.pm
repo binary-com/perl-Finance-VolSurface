@@ -43,6 +43,12 @@ has '+type' => (
     default => 'delta',
 );
 
+=head2 atm_spread_point
+
+(to be defined)
+
+=cut
+
 has atm_spread_point => (
     is      => 'ro',
     isa     => 'Num',
@@ -97,21 +103,26 @@ sub _build_surface_data {
 
 =head2 get_volatility
 
+Calculates volatility from the surface based input parameters.
+
 Expects 3 mandatory arguments as input.
 
 1) from - Date::Utility object
 2) to - Date::Utility object
 3) delta | strike | moneyness.
 
-Calculates volatility from the surface based input parameters.
+For a moneyness surface, the C<spot> value is also required.
 
-USAGE:
+Will return a single volatility value, or throw an exception if the volsurface or parameters
+are invalid.
+
+Examples:
 
   my $from = Date::Utility->new('2016-06-01 10:00:00');
   my $to   = Date::Utility->new('2016-06-01 15:00:00');
   my $vol  = $s->get_volatility({delta => 25, from => $from, to => $to});
   my $vol  = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
-  my $vol  = $s->get_volatility({delta => 50, from => $from, to => $to});
+  my $vol  = $s->get_volatility({moneyness => 95, spot => 104.23, from => $from, to => $to});
 
 =cut
 
@@ -178,7 +189,7 @@ sub get_smile {
 
     if (not $self->_is_valid_volatility_smile($smile)) {
         $self->validation_error(
-            "Invalid smile volatility on smile calculated from[" . $from->datetime . "] to[" . $to->datetime . "] for " . $self->symbol);
+            "Invalid smile volatility on smile calculated from [" . $from->datetime . "] to [" . $to->datetime . "] for " . $self->symbol);
     }
 
     return $smile;
