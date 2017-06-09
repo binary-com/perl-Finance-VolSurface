@@ -22,7 +22,7 @@ Finance::VolSurface -  represents a volatility surface
     my $volsurface = Finance::VolSurface::Delta->new(
         surface       => { ... },
         recorded_date => $date,
-        underlying    => '...',
+        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
     );
 
     # Interpolate points on the surface to get a single number for volatility
@@ -135,7 +135,7 @@ This is a single point.
 =head2 Construction
 
     Finance::VolSurface->new({
-        underlying    => 'frxUSDJPY',
+        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
     });
 
 =cut
@@ -147,6 +147,8 @@ use Moose;
 use Date::Utility;
 
 use List::Util qw(first);
+
+use Finance::Underlying;
 
 use Finance::VolSurface::Utils;
 use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
@@ -276,10 +278,7 @@ The symbol of the underlying that this surface is for (e.g. frxUSDJPY)
 
 =cut
 
-has symbol => (
-    is         => 'ro',
-    lazy_build => 1,
-);
+sub symbol { shift->underlying->symbol }
 
 =head2 term_by_day
 
@@ -312,6 +311,17 @@ has type => (
     required => 1,
     init_arg => undef,
     default  => undef,
+);
+
+=head2 underlying
+
+The L<Finance::Underlying> for this volsurface (mandatory).
+
+=cut
+
+has underlying => (
+    is  => 'ro',
+    isa => 'Finance::Underlying',
 );
 
 =head2 get_rr_bf_for_smile
