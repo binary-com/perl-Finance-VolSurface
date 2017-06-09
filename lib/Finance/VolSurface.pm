@@ -145,8 +145,11 @@ no indirect;
 use Moose;
 
 use Date::Utility;
+use Try::Tiny;
 
 use List::Util qw(first);
+use List::MoreUtils qw(notall any);
+use List::Util qw( min max first );
 
 use Finance::Underlying;
 
