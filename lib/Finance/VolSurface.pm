@@ -23,6 +23,8 @@ Finance::VolSurface -  represents a volatility surface
         surface       => { ... },
         recorded_date => $date,
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
+        r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
+        q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
     );
 
     # Interpolate points on the surface to get a single number for volatility
@@ -152,6 +154,7 @@ use List::MoreUtils qw(notall any);
 use List::Util qw( min max first );
 
 use Finance::Underlying;
+use Finance::YieldCurve;
 
 use Finance::VolSurface::Utils;
 use Finance::VolSurface::Types qw(Finance_VolSurface_Type);
@@ -197,6 +200,30 @@ The date (and time) that the surface was recorded, as a Date::Utility.
 has recorded_date => (
     is         => 'ro',
     lazy_build => 1,
+);
+
+=head2 q_rates
+
+A yield curve for Q rates. For stocks, these would represent dividends.
+
+=cut
+
+has q_rates => (
+    is       => 'ro',
+    isa      => 'Finance::YieldCurve',
+    required => 1,
+);
+
+=head2 r_rates
+
+A yield curve for R rates. This would typically be interest rates.
+
+=cut
+
+has r_rates => (
+    is       => 'ro',
+    isa      => 'Finance::YieldCurve',
+    required => 1,
 );
 
 =head2 smile_points
