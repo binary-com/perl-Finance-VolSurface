@@ -14,7 +14,7 @@ Finance::VolSurface -  represents a volatility surface
     my $volsurface = Finance::VolSurface::Delta->new(
         surface       => { ... },
         recorded_date => $date,
-        underlying    => '...',
+        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
     );
 
     # Interpolate points on the surface to get a single number for volatility
@@ -127,7 +127,7 @@ This is a single point.
 ## Construction
 
     Finance::VolSurface->new({
-        underlying    => 'frxUSDJPY',
+        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
     });
 
 ## effective\_date
@@ -173,6 +173,10 @@ Get all the terms in a surface in ascending order.
 ## type
 
 Type of the surface, delta, moneyness or flat.
+
+## underlying
+
+The [Finance::Underlying](https://metacpan.org/pod/Finance::Underlying) for this volsurface (mandatory).
 
 ## get\_rr\_bf\_for\_smile
 
