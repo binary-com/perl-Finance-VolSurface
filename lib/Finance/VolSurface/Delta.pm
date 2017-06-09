@@ -312,7 +312,7 @@ sub _convert_moneyness_to_delta {
     my ($self, $args) = @_;
 
     my $underlying = $self->underlying;
-    my $spot;
+    my $spot = $args->{spot} // die 'spot value required';
     $spot = $underlying->spot_tick->quote if defined $underlying->spot_tick;
     $args->{strike} = get_strike_for_moneyness({
         moneyness => $args->{moneyness},
