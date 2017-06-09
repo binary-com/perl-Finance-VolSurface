@@ -313,7 +313,6 @@ sub _convert_moneyness_to_delta {
 
     my $underlying = $self->underlying;
     my $spot = $args->{spot} // die 'spot value required';
-    $spot = $underlying->spot_tick->quote if defined $underlying->spot_tick;
     $args->{strike} = get_strike_for_moneyness({
         moneyness => $args->{moneyness},
         spot      => $spot,
@@ -340,8 +339,7 @@ sub _ensure_conversion_args {
     my $underlying = $self->underlying;
 
     $new_args{t} ||= ($args->{to}->epoch - $args->{from}->epoch) / (365 * 86400);
-    $new_args{spot}             ||= $underlying->spot_tick->quote;
-    $new_args{premium_adjusted} ||= $underlying->market_convention->{delta_premium_adjusted};
+    $new_args{premium_adjusted} ||= $underlying->delta_premium_adjusted;
     $new_args{r_rate}           ||= $self->builder->build_interest_rate->interest_rate_for($new_args{t});
     $new_args{q_rate}           ||= $self->builder->build_dividend->dividend_rate_for($new_args{t});
 
