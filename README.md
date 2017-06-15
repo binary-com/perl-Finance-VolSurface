@@ -7,13 +7,9 @@ Finance::VolSurface -  represents a volatility surface
     use feature qw(say);
     use Finance::VolSurface;
 
-    Finance::VolSurface->new(
-        delta => { ... },
-    );
-
     my $volsurface = Finance::VolSurface::Delta->new(
-        surface       => { ... },
-        recorded_date => $date,
+        surface       => { ... },  # see L</Delta surface> for format
+        recorded_date => $date,    # this is a L<Date::Utility> instance
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
         r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
         q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
@@ -22,10 +18,11 @@ Finance::VolSurface -  represents a volatility surface
     # Interpolate points on the surface to get a single number for volatility
     my $vol = $volsurface->get_volatility(
         delta => 50,
-        from  => $now,
+        from  => $now,  # This is a L<Date::Utility> instance
         to    => $now->plus('3d'),
     );
-    # Spread from max or atm
+
+    # TODO - Spread from max or atm
     my $spread = $volsurface->get_spread(
         sought_point => 'atm', # may rename to delta
         days         => 7,     # may rename to tenor
@@ -78,8 +75,6 @@ Expected tenors could include:
 Internally, the key for the surface is always a number of days (the tenor),
 and for overnight this would typically be 1 to 3 (for weekends).
 
-On load, we need to 
-
 ## Moneyness
 
 The keys in the smile hashref are moneyness points as percentages (100 = 100%),
@@ -128,9 +123,14 @@ This is a single point.
 
 ## Construction
 
-    Finance::VolSurface->new({
-        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
-    });
+Note that a volsurface instance must always be created from the appropriate subclass,
+i.e. one of:
+
+- [Finance::VolSurface::Delta](https://metacpan.org/pod/Finance::VolSurface::Delta)
+- [Finance::VolSurface::Moneyness](https://metacpan.org/pod/Finance::VolSurface::Moneyness)
+- [Finance::VolSurface::Flat](https://metacpan.org/pod/Finance::VolSurface::Flat)
+
+# ATTRIBUTES
 
 ## effective\_date
 
@@ -138,19 +138,18 @@ Surfaces roll over at 5pm NY time, so the vols of any surfaces recorded after 5p
 before GMT midnight are effectively for the next GMT day. This attribute holds this
 effective date.
 
-## for\_date
-
-The date for which we want to have the volatility surface data
-
 ## recorded\_date
 
-The date (and time) that the surface was recorded, as a Date::Utility.
+The date (and time) that the surface was recorded, as a [Date::Utility](https://metacpan.org/pod/Date::Utility). This should
+be provided on construction.
 
 ## smile\_points
 
 The points across a smile.
 
 It can be delta points, moneyness points or any other points that we might have in the future.
+
+Returns an arrayref of numerical point values that comprise the smile.
 
 ## spread\_points
 
@@ -190,35 +189,6 @@ For more info see: https://en.wikipedia.org/wiki/Risk\_reversal and https://en.w
 Returns the smile on the surface.
 Returns an empty hash reference if not present.
 
----
-
-# NAME
-
-Finance::VolSurface::Delta
-
-# DESCRIPTION
-
-Represents a volatility surface, built from market implied volatilities.
-
-# SYNOPSIS
-
-    my $underlying = 'frxUSDJPY';
-    my $surface = Finance::VolSurface::Delta->new({underlying => $underlying});
-
-# ATTRIBUTES
-
-## type
-
-Return the surface type
-
-## atm\_spread\_point
-
-(to be defined)
-
-## variance\_table
-
-A variance surface. Converted from raw volatility input surface.
-
 ## get\_volatility
 
 Calculates volatility from the surface based input parameters.
@@ -242,22 +212,32 @@ Examples:
     my $vol  = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
     my $vol  = $s->get_volatility({moneyness => 95, spot => 104.23, from => $from, to => $to});
 
+## atm\_spread\_point
+
+(to be defined)
+
+## variance\_table
+
+A variance surface. Converted from raw volatility input surface.
+Only available on delta volsurfaces.
+
 ## get\_smile
 
 Calculate the requested smile from volatility surface.
+
+Usage:
+
+    my $smile = $vol_surface->get_smile($days);
 
 ## get\_variances
 
 Calculate the variance for a given date based on volatility surface data.
 
+Only applicable to delta volsurfaces.
+
 ## get\_weight
 
-Get the weight between to given dates.
-
-## interpolate
-
-Quadratic interpolation to interpolate across smile
-\->interpolate({smile => $smile, sought\_point => $sought\_point});
+Get the weight between two given dates.
 
 ## get\_market\_rr\_bf
 
@@ -266,6 +246,26 @@ Returns the rr and bf values for a given day
 ## get\_smile\_expiries
 
 An array reference of that contains expiry dates for smiles on the volatility surface.
+
+## min\_vol\_spread
+
+minimum volatility spread that we can accept for this volatility surface.
+
+## interpolate
+
+Quadratic interpolation to interpolate across smile
+
+    $surface->interpolate({smile => $smile, sought_point => $sought_point});
+
+---
+
+# NAME
+
+Finance::VolSurface::Delta
+
+# DESCRIPTION
+
+See [Finance::VolSurface](https://metacpan.org/pod/Finance::VolSurface).
 
 ---
 
@@ -287,42 +287,7 @@ Finance::VolSurface::Moneyness
 
 # DESCRIPTION
 
-Base class for strike-based volatility surfaces by moneyness.
-
-## type
-
-Return the surface type
-
-## min\_vol\_spread
-
-minimum volatility spread that we can accept for this volatility surface.
-
-## get\_volatility
-
-USAGE:
-
-    my $vol = $s->get_volatility({moneyness => 96, from => $from, to => $to});
-    my $vol = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
-    my $vol = $s->get_volatility({moneyness => 90, from => $from, to => $to});
-
-## get\_smile
-
-Get the smile for specific day.
-
-Usage:
-
-    my $smile = $vol_surface->get_smile($days);
-
-## interpolate
-
-This is how you could interpolate across smile.
-This uses the default interpolation method of the surface.
-
-    $surface->interpolate({smile => $smile, sought_point => $sought_point});
-
-## get\_market\_rr\_bf
-
-Returns the rr and bf values for a given day
+See [Finance::VolSurface](https://metacpan.org/pod/Finance::VolSurface).
 
 ## get\_smile\_expiries
 
