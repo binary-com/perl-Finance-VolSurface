@@ -15,13 +15,9 @@ Finance::VolSurface -  represents a volatility surface
     use feature qw(say);
     use Finance::VolSurface;
 
-    Finance::VolSurface->new(
-        delta => { ... },
-    );
-
     my $volsurface = Finance::VolSurface::Delta->new(
-        surface       => { ... },
-        recorded_date => $date,
+        surface       => { ... },  # see L</Delta surface> for format
+        recorded_date => $date,    # this is a L<Date::Utility> instance
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
         r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
         q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
@@ -30,10 +26,11 @@ Finance::VolSurface -  represents a volatility surface
     # Interpolate points on the surface to get a single number for volatility
     my $vol = $volsurface->get_volatility(
         delta => 50,
-        from  => $now,
+        from  => $now,  # This is a L<Date::Utility> instance
         to    => $now->plus('3d'),
     );
-    # Spread from max or atm
+
+    # TODO - Spread from max or atm
     my $spread = $volsurface->get_spread(
         sought_point => 'atm', # may rename to delta
         days         => 7,     # may rename to tenor
@@ -86,8 +83,6 @@ Expected tenors could include:
 Internally, the key for the surface is always a number of days (the tenor),
 and for overnight this would typically be 1 to 3 (for weekends).
 
-On load, we need to 
-
 =head2 Moneyness
 
 The keys in the smile hashref are moneyness points as percentages (100 = 100%),
@@ -136,9 +131,18 @@ This is a single point.
 
 =head2 Construction
 
-    Finance::VolSurface->new({
-        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
-    });
+Note that a volsurface instance must always be created from the appropriate subclass,
+i.e. one of:
+
+=over 4
+
+=item * L<Finance::VolSurface::Delta>
+
+=item * L<Finance::VolSurface::Moneyness>
+
+=item * L<Finance::VolSurface::Flat>
+
+=back
 
 =cut
 
@@ -162,6 +166,8 @@ use Finance::VolSurface::ExpiryConventions;
 
 our $extra_vol_diff_by_delta = 0.1;
 
+=head1 ATTRIBUTES
+
 =head2 effective_date
 
 Surfaces roll over at 5pm NY time, so the vols of any surfaces recorded after 5pm NY but
@@ -182,20 +188,10 @@ sub _build_effective_date {
     return Finance::VolSurface::Utils->new->effective_date_for($self->recorded_date);
 }
 
-=head2 for_date
-
-The date for which we want to have the volatility surface data
-
-=cut
-
-has for_date => (
-    is      => 'ro',
-    default => undef,
-);
-
 =head2 recorded_date
 
-The date (and time) that the surface was recorded, as a Date::Utility.
+The date (and time) that the surface was recorded, as a L<Date::Utility>. This should
+be provided on construction.
 
 =cut
 
@@ -233,6 +229,8 @@ has r_rates => (
 The points across a smile.
 
 It can be delta points, moneyness points or any other points that we might have in the future.
+
+Returns an arrayref of numerical point values that comprise the smile.
 
 =cut
 
@@ -571,4 +569,118 @@ has validation_error => (
     is      => 'rw',
     default => '',
 );
+
+=head2 get_volatility
+
+Calculates volatility from the surface based input parameters.
+
+Expects 3 mandatory arguments as input.
+
+1) from - Date::Utility object
+2) to - Date::Utility object
+3) delta | strike | moneyness.
+
+For a moneyness surface, the C<spot> value is also required.
+
+Will return a single volatility value, or throw an exception if the volsurface or parameters
+are invalid.
+
+Examples:
+
+  my $from = Date::Utility->new('2016-06-01 10:00:00');
+  my $to   = Date::Utility->new('2016-06-01 15:00:00');
+  my $vol  = $s->get_volatility({delta => 25, from => $from, to => $to});
+  my $vol  = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
+  my $vol  = $s->get_volatility({moneyness => 95, spot => 104.23, from => $from, to => $to});
+
+=cut
+
+sub get_volatility { ... }
+
+=head2 atm_spread_point
+
+(to be defined)
+
+=cut
+
+has atm_spread_point => (
+    is      => 'ro',
+    isa     => 'Num',
+);
+
+=head2 variance_table
+
+A variance surface. Converted from raw volatility input surface.
+Only available on delta volsurfaces.
+
+=cut
+
+has variance_table => (
+    is         => 'ro',
+    lazy_build => 1,
+);
+
+=head2 get_smile
+
+Calculate the requested smile from volatility surface.
+
+Usage:
+
+    my $smile = $vol_surface->get_smile($days);
+
+=cut
+
+sub get_smile { ... }
+
+=head2 get_variances
+
+Calculate the variance for a given date based on volatility surface data.
+
+Only applicable to delta volsurfaces.
+
+=cut
+
+sub get_variances { ... }
+
+=head2 get_weight
+
+Get the weight between two given dates.
+
+=cut
+
+sub get_weight { ... }
+
+=head2 get_market_rr_bf
+
+Returns the rr and bf values for a given day
+
+=cut
+
+=head2 get_smile_expiries
+
+An array reference of that contains expiry dates for smiles on the volatility surface.
+
+=cut
+
+=head2 min_vol_spread
+
+minimum volatility spread that we can accept for this volatility surface.
+
+=cut
+
+has min_vol_spread => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 3.1 / 100,
+);
+
+=head2 interpolate
+
+Quadratic interpolation to interpolate across smile
+
+    $surface->interpolate({smile => $smile, sought_point => $sought_point});
+
+=cut
+
 1;
+

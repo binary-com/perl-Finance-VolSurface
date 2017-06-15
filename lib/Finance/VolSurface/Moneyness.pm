@@ -6,7 +6,7 @@ Finance::VolSurface::Moneyness
 
 =head1 DESCRIPTION
 
-Base class for strike-based volatility surfaces by moneyness.
+See L<Finance::VolSurface>.
 
 =cut
 
@@ -31,43 +31,17 @@ sub _build_surface_data {
     return $self->_clean($surface);
 }
 
-=head2 type
-
-Return the surface type
-
-=cut
-
 has '+type' => (
     default => 'moneyness',
 );
 
-=head2 min_vol_spread
-
-minimum volatility spread that we can accept for this volatility surface.
-
-=cut
-
-has min_vol_spread => (
-    is      => 'ro',
-    isa     => 'Num',
+has '+min_vol_spread' => (
     default => 3.1 / 100,
 );
 
-has atm_spread_point => (
-    is      => 'ro',
-    isa     => 'Num',
+has '+atm_spread_point' => (
     default => 100,
 );
-
-=head2 get_volatility
-
-USAGE:
-
-  my $vol = $s->get_volatility({moneyness => 96, from => $from, to => $to});
-  my $vol = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
-  my $vol = $s->get_volatility({moneyness => 90, from => $from, to => $to});
-
-=cut
 
 sub get_volatility {
     my ($self, $args) = @_;
@@ -115,16 +89,6 @@ sub get_volatility {
         sought_point => $moneyness,
     });
 }
-
-=head2 get_smile
-
-Get the smile for specific day.
-
-Usage:
-
-    my $smile = $vol_surface->get_smile($days);
-
-=cut
 
 sub get_smile {
     my ($self, $day) = @_;
@@ -223,14 +187,6 @@ sub _market_maturities_interpolation_function {
     };
 }
 
-=head2 interpolate
-
-This is how you could interpolate across smile.
-This uses the default interpolation method of the surface.
-
-    $surface->interpolate({smile => $smile, sought_point => $sought_point});
-=cut
-
 sub interpolate {
     my ($self, $args) = @_;
 
@@ -238,12 +194,6 @@ sub interpolate {
 
     return Math::Function::Interpolator->new(points => $args->{smile})->$method($args->{sought_point});
 }
-
-=head2 get_market_rr_bf
-
-Returns the rr and bf values for a given day
-
-=cut
 
 sub get_market_rr_bf {
     my ($self, $day) = @_;
@@ -253,12 +203,6 @@ sub get_market_rr_bf {
 
     return $self->get_rr_bf_for_smile(\%smile);
 }
-
-=head2 get_smile_expiries
-
-An array reference of that contains expiry dates for smiles on the volatility surface.
-
-=cut
 
 sub get_smile_expiries {
     my $self = shift;
