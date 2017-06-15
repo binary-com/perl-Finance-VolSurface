@@ -15,13 +15,9 @@ Finance::VolSurface -  represents a volatility surface
     use feature qw(say);
     use Finance::VolSurface;
 
-    Finance::VolSurface->new(
-        delta => { ... },
-    );
-
     my $volsurface = Finance::VolSurface::Delta->new(
-        surface       => { ... },
-        recorded_date => $date,
+        surface       => { ... },  # see L</Delta surface> for format
+        recorded_date => $date,    # this is a L<Date::Utility> instance
         underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
         r_rates       => Finance::YieldCurve->new(asset => 'EUR', data => { ... }),
         q_rates       => Finance::YieldCurve->new(asset => 'USD', data => { ... }),
@@ -30,10 +26,11 @@ Finance::VolSurface -  represents a volatility surface
     # Interpolate points on the surface to get a single number for volatility
     my $vol = $volsurface->get_volatility(
         delta => 50,
-        from  => $now,
+        from  => $now,  # This is a L<Date::Utility> instance
         to    => $now->plus('3d'),
     );
-    # Spread from max or atm
+
+    # TODO - Spread from max or atm
     my $spread = $volsurface->get_spread(
         sought_point => 'atm', # may rename to delta
         days         => 7,     # may rename to tenor
@@ -85,8 +82,6 @@ Expected tenors could include:
 
 Internally, the key for the surface is always a number of days (the tenor),
 and for overnight this would typically be 1 to 3 (for weekends).
-
-On load, we need to 
 
 =head2 Moneyness
 
