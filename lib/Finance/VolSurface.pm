@@ -597,4 +597,90 @@ Examples:
 
 sub get_volatility { ... }
 
+=head2 atm_spread_point
+
+(to be defined)
+
+=cut
+
+has atm_spread_point => (
+    is      => 'ro',
+    isa     => 'Num',
+);
+
+=head2 variance_table
+
+A variance surface. Converted from raw volatility input surface.
+Only available on delta volsurfaces.
+
+=cut
+
+has variance_table => (
+    is         => 'ro',
+    lazy_build => 1,
+);
+
+=head2 get_smile
+
+Calculate the requested smile from volatility surface.
+
+Usage:
+
+    my $smile = $vol_surface->get_smile($days);
+
+=cut
+
+sub get_smile { ... }
+
+=head2 get_variances
+
+Calculate the variance for a given date based on volatility surface data.
+
+Only applicable to delta volsurfaces.
+
+=cut
+
+sub get_variances { ... }
+
+=head2 get_weight
+
+Get the weight between two given dates.
+
+=cut
+
+sub get_weight { ... }
+
+=head2 get_market_rr_bf
+
+Returns the rr and bf values for a given day
+
+=cut
+
+=head2 get_smile_expiries
+
+An array reference of that contains expiry dates for smiles on the volatility surface.
+
+=cut
+
+=head2 min_vol_spread
+
+minimum volatility spread that we can accept for this volatility surface.
+
+=cut
+
+has min_vol_spread => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 3.1 / 100,
+);
+
+=head2 interpolate
+
+Quadratic interpolation to interpolate across smile
+
+    $surface->interpolate({smile => $smile, sought_point => $sought_point});
+
+=cut
+
 1;
+

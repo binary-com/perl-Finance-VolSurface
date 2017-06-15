@@ -6,12 +6,7 @@ Finance::VolSurface::Delta
 
 =head1 DESCRIPTION
 
-Represents a volatility surface, built from market implied volatilities.
-
-=head1 SYNOPSIS
-
-    my $underlying = 'frxUSDJPY';
-    my $surface = Finance::VolSurface::Delta->new({underlying => $underlying});
+See L<Finance::VolSurface>.
 
 =cut
 
@@ -31,39 +26,12 @@ use VolSurface::Utils qw( get_delta_for_strike get_strike_for_moneyness get_stri
 
 ## VERSION
 
-=head1 ATTRIBUTES
-
-=head2 type
-
-Return the surface type
-
-=cut
-
 has '+type' => (
     default => 'delta',
 );
 
-=head2 atm_spread_point
-
-(to be defined)
-
-=cut
-
-has atm_spread_point => (
-    is      => 'ro',
-    isa     => 'Num',
+has '+atm_spread_point' => (
     default => '50',
-);
-
-=head2 variance_table
-
-A variance surface. Converted from raw volatility input surface.
-
-=cut
-
-has variance_table => (
-    is         => 'ro',
-    lazy_build => 1,
 );
 
 sub _build_variance_table {
@@ -100,6 +68,8 @@ sub _build_surface_data {
 
     return $self->_clean($surface);
 }
+
+# METHODS
 
 sub get_volatility {
     my ($self, $args) = @_;
@@ -143,12 +113,6 @@ sub get_volatility {
     });
 }
 
-=head2 get_smile
-
-Calculate the requested smile from volatility surface.
-
-=cut
-
 sub get_smile {
     my ($self, $from, $to) = @_;
 
@@ -169,12 +133,6 @@ sub get_smile {
 
     return $smile;
 }
-
-=head2 get_variances
-
-Calculate the variance for a given date based on volatility surface data.
-
-=cut
 
 sub get_variances {
     my ($self, $date) = @_;
@@ -198,12 +156,6 @@ sub get_variances {
 
     return \%variances;
 }
-
-=head2 get_weight
-
-Get the weight between to given dates.
-
-=cut
 
 sub get_weight {
     my ($self, $date1, $date2) = @_;
@@ -242,24 +194,11 @@ sub _break_range_into_days {
     return \@dates;
 }
 
-=head2 interpolate
-
-Quadratic interpolation to interpolate across smile
-->interpolate({smile => $smile, sought_point => $sought_point});
-
-=cut
-
 sub interpolate {
     my ($self, $args) = @_;
 
     return Math::Function::Interpolator->new(points => $args->{smile})->quadratic($args->{sought_point});
 }
-
-=head2 get_market_rr_bf
-
-Returns the rr and bf values for a given day
-
-=cut
 
 sub get_market_rr_bf {
     my ($self, $days) = @_;
@@ -268,12 +207,6 @@ sub get_market_rr_bf {
 
     return $self->get_rr_bf_for_smile($smile);
 }
-
-=head2 get_smile_expiries
-
-An array reference of that contains expiry dates for smiles on the volatility surface.
-
-=cut
 
 sub get_smile_expiries {
     my $self = shift;
