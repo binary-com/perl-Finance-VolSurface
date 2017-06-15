@@ -100,7 +100,7 @@ sub get_volatility {
 
     my $moneyness =
           $internal_args{strike}
-        ? $internal_args{strike} / $self->spot * 100
+        ? $internal_args{strike} / $args->{spot} * 100
         : $internal_args{moneyness};
 
     die "Sought point must be a number." if not looks_like_number($moneyness);
@@ -317,12 +317,15 @@ sub _convert_moneyness_smile_to_delta {
 
     my $moneyness_smile = $self->get_smile($days);
 
+    # Arbitrary value - we only care about percentage anyway
+    my $spot = 100;
     my %strikes =
-        map { get_strike_for_moneyness({moneyness => $_ / 100, spot => $self->spot,}) => $moneyness_smile->{$_} } keys %$moneyness_smile;
+        map { get_strike_for_moneyness({moneyness => $_ / 100 }) => $moneyness_smile->{$_} } keys %$moneyness_smile;
 
     my $tiy    = $days / 365;
-    my $r_rate = $self->builder->build_interest_rate->interest_rate_for($tiy);
-    my $q_rate = $self->builder->build_dividend->dividend_rate_for($tiy);
+    my $interpolate_method = $self->underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
+    my $r_rate = $self->r_rates->interest_rate_for($tiy);
+    my $q_rate = $self->q_rates->$interpolate_method($tiy);
     my %deltas;
     foreach my $strike (keys %strikes) {
         my $vol   = $strikes{$strike};
@@ -330,10 +333,10 @@ sub _convert_moneyness_smile_to_delta {
             strike           => $strike,
             atm_vol          => $vol,
             t                => $tiy,
-            spot             => $self->spot,
+            spot             => $spot,
             r_rate           => $r_rate,
             q_rate           => $q_rate,
-            premium_adjusted => $self->underlying->market_convention->{delta_premium_adjusted},
+            premium_adjusted => $self->underlying->delta_premium_adjusted,
         });
         $deltas{$delta} = $vol;
     }
@@ -352,12 +355,14 @@ sub _max_difference_between_smile_points {
 sub _admissible_check {
     my $self = shift;
 
-    my $builder  = $self->builder;
-    my $S        = $self->spot;
+    # We don't want to pass around a spot just to calculate the barrier. Since we're looking
+    # at the shape of the curve, not the specific values, we pick an arbitrary spot here.
+    my $S        = 100;
     my @expiries = @{$self->get_smile_expiries};
     my @tenors   = @{$self->original_term_for_smile};
     my $now      = Date::Utility->new;
 
+    my $interpolate_method = $self->underlying->instrument_type =~ /stock/ ? 'find_closest_to' : 'interpolate';
     for (my $i = 1; $i <= $#expiries; $i++) {
         my $day    = $tenors[$i - 1];
         my $expiry = $expiries[$i];
@@ -366,8 +371,8 @@ sub _admissible_check {
             if ($expiry->days_between($now) <= 0);
 
         my $t     = ($expiry->epoch - $now->epoch) / (365 * 86400);
-        my $r     = $builder->build_interest_rate->interest_rate_for($t);
-        my $q     = $builder->build_dividend->dividend_rate_for($t);
+	my $r     = $self->r_rates->interest_rate_for($t);
+	my $q     = $self->q_rates->$interpolate_method($t);
         my $smile = $self->surface->{$day}->{smile};
 
         my @volatility_level = sort { $a <=> $b } keys %{$smile};

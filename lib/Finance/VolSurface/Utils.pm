@@ -87,81 +87,21 @@ sub _is_between {
     return 1;
 }
 
-my %premium_adjusted = map { $_ => 1 } qw(
-    frxAUDAED
-    frxAUDCAD
-    frxAUDCHF
-    frxAUDHKD
-    frxAUDIDR
-    frxAUDJPY
-    frxAUDMXN
-    frxAUDNOK
-    frxAUDNZD
-    frxAUDSEK
-    frxAUDSGD
-    frxAUDTRY
-    frxAUDZAR
-    frxBTCEUR
-    frxBTCUSD
-    frxCADCHF
-    frxCADJPY
-    frxCHFJPY
-    frxEURAED
-    frxEURAUD
-    frxEURCAD
-    frxEURCHF
-    frxEURGBP
-    frxEURHKD
-    frxEURIDR
-    frxEURINR
-    frxEURJPY
-    frxEURMXN
-    frxEURNOK
-    frxEURNZD
-    frxEURPLN
-    frxEURSEK
-    frxEURSGD
-    frxEURTRY
-    frxEURZAR
-    frxGBPAED
-    frxGBPAUD
-    frxGBPCAD
-    frxGBPCHF
-    frxGBPHKD
-    frxGBPIDR
-    frxGBPINR
-    frxGBPJPY
-    frxGBPMXN
-    frxGBPNOK
-    frxGBPNZD
-    frxGBPPLN
-    frxGBPSEK
-    frxGBPSGD
-    frxGBPTRY
-    frxGBPZAR
-    frxNZDCHF
-    frxNZDJPY
-    frxUSDAED
-    frxUSDCAD
-    frxUSDCHF
-    frxUSDHKD
-    frxUSDIDR
-    frxUSDINR
-    frxUSDJPY
-    frxUSDMXN
-    frxUSDNOK
-    frxUSDPLN
-    frxUSDSEK
-    frxUSDSGD
-    frxUSDTRY
-    frxUSDZAR
-);
+=head2 get_ny_offset_from_gmt
 
-sub underlying_is_premium_adjusted {
-    my ($symbol) = @_;
-    my ($curr1, $curr2) = $symbol =~ /^frx(\w{3})(\w{3})$/ or die 'unhandled forex symbol ' . $symbol;
+Returns offset in hours for the given epoch for NY vs GMT.
+Caches output per hour.
 
-    return exists $premium_adjusted{$symbol};
+=cut
+
+my $ny_offset_from_gmt_by_hour = {};
+
+sub get_ny_offset_from_gmt {
+    my $epoch = shift;
+    $epoch = int($epoch / 3600);
+    $ny_offset_from_gmt_by_hour->{$epoch} = Date::Utility->new($epoch * 3600)->timezone_offset('America/New_York')->hours
+        unless $ny_offset_from_gmt_by_hour->{$epoch};
+    return $ny_offset_from_gmt_by_hour->{$epoch};
 }
 
 1;

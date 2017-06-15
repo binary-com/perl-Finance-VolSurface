@@ -146,6 +146,14 @@ The date for which we want to have the volatility surface data
 
 The date (and time) that the surface was recorded, as a Date::Utility.
 
+## q\_rates
+
+A yield curve for Q rates. For stocks, these would represent dividends.
+
+## r\_rates
+
+A yield curve for R rates. This would typically be interest rates.
+
 ## smile\_points
 
 The points across a smile.
