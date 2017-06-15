@@ -131,9 +131,18 @@ This is a single point.
 
 =head2 Construction
 
-    Finance::VolSurface->new({
-        underlying    => Finance::Underlying->by_symbol('frxEURUSD'),
-    });
+Note that a volsurface instance must always be created from the appropriate subclass,
+i.e. one of:
+
+=over 4
+
+=item * L<Finance::VolSurface::Delta>
+
+=item * L<Finance::VolSurface::Moneyness>
+
+=item * L<Finance::VolSurface::Flat>
+
+=back
 
 =cut
 
