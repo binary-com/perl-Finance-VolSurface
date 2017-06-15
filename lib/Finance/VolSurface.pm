@@ -200,6 +200,8 @@ The points across a smile.
 
 It can be delta points, moneyness points or any other points that we might have in the future.
 
+Returns an arrayref of numerical point values that comprise the smile.
+
 =cut
 
 has smile_points => (
@@ -357,5 +359,32 @@ sub get_surface_smile {
 
     return $self->surface->{$days}->{smile} // {};
 }
+
+=head2 get_volatility
+
+Calculates volatility from the surface based input parameters.
+
+Expects 3 mandatory arguments as input.
+
+1) from - Date::Utility object
+2) to - Date::Utility object
+3) delta | strike | moneyness.
+
+For a moneyness surface, the C<spot> value is also required.
+
+Will return a single volatility value, or throw an exception if the volsurface or parameters
+are invalid.
+
+Examples:
+
+  my $from = Date::Utility->new('2016-06-01 10:00:00');
+  my $to   = Date::Utility->new('2016-06-01 15:00:00');
+  my $vol  = $s->get_volatility({delta => 25, from => $from, to => $to});
+  my $vol  = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
+  my $vol  = $s->get_volatility({moneyness => 95, spot => 104.23, from => $from, to => $to});
+
+=cut
+
+sub get_volatility { ... }
 
 1;

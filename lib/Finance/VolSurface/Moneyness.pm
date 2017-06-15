@@ -59,16 +59,6 @@ has atm_spread_point => (
     default => 100,
 );
 
-=head2 get_volatility
-
-USAGE:
-
-  my $vol = $s->get_volatility({moneyness => 96, from => $from, to => $to});
-  my $vol = $s->get_volatility({strike => $bet->barrier, from => $from, to => $to});
-  my $vol = $s->get_volatility({moneyness => 90, from => $from, to => $to});
-
-=cut
-
 sub get_volatility {
     my ($self, $args) = @_;
 
