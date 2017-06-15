@@ -289,10 +289,6 @@ Finance::VolSurface::Moneyness
 
 See [Finance::VolSurface](https://metacpan.org/pod/Finance::VolSurface).
 
-## get\_smile\_expiries
-
-An array reference of that contains expiry dates for smiles on the volatility surface.
-
 ---
 
 ## finance\_volsurface\_type
