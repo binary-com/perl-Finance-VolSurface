@@ -166,6 +166,8 @@ use Finance::VolSurface::ExpiryConventions;
 
 our $extra_vol_diff_by_delta = 0.1;
 
+=head1 ATTRIBUTES
+
 =head2 effective_date
 
 Surfaces roll over at 5pm NY time, so the vols of any surfaces recorded after 5pm NY but
@@ -186,20 +188,10 @@ sub _build_effective_date {
     return Finance::VolSurface::Utils->new->effective_date_for($self->recorded_date);
 }
 
-=head2 for_date
-
-The date for which we want to have the volatility surface data
-
-=cut
-
-has for_date => (
-    is      => 'ro',
-    default => undef,
-);
-
 =head2 recorded_date
 
-The date (and time) that the surface was recorded, as a Date::Utility.
+The date (and time) that the surface was recorded, as a L<Date::Utility>. This should
+be provided on construction.
 
 =cut
 
