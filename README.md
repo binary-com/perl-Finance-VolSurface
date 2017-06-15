@@ -197,6 +197,10 @@ For more info see: https://en.wikipedia.org/wiki/Risk\_reversal and https://en.w
 Returns the smile on the surface.
 Returns an empty hash reference if not present.
 
+## is\_valid
+
+Does this volatility surface pass our validation.
+
 ## get\_volatility
 
 Calculates volatility from the surface based input parameters.
@@ -332,3 +336,8 @@ This returns a Date::Utility truncated to midnight of the relevant day.
 ## is\_before\_rollover
 
 Returns 1 if given date-time is before roll-over time.
+
+## get\_ny\_offset\_from\_gmt
+
+Returns offset in hours for the given epoch for NY vs GMT.
+Caches output per hour.
