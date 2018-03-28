@@ -15,7 +15,6 @@ Some general vol-related utility functions.
 no indirect;
 use Moo;
 
-use DateTime::TimeZone;
 use Date::Utility;
 use Number::Closest::XS qw(find_closest_numbers_around);
 use List::MoreUtils qw(notall);
